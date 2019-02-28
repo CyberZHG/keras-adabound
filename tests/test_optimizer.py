@@ -60,16 +60,16 @@ class TestOptimizers(TestCase):
             optimizer.step()
             keras_loss = keras_linear.train_on_batch(x, y).tolist()
             # print(i, torch_loss, keras_loss)
-        self.assertTrue(abs(torch_loss - keras_loss) < 1e-3)
+        self.assertTrue(abs(torch_loss - keras_loss) < 1e-2)
         self.assertTrue(np.allclose(
             torch_linear.weight.detach().numpy().transpose(),
             keras_linear.get_weights()[0],
-            atol=2e-3,
+            atol=1e-2,
         ))
         self.assertTrue(np.allclose(
             torch_linear.bias.detach().numpy(),
             keras_linear.get_weights()[1],
-            atol=2e-3,
+            atol=1e-2,
         ))
 
     def test_same_amsgrad(self):
@@ -97,16 +97,16 @@ class TestOptimizers(TestCase):
             optimizer.step()
             keras_loss = keras_linear.train_on_batch(x, y).tolist()
             # print(i, torch_loss, keras_loss)
-        self.assertTrue(abs(torch_loss - keras_loss) < 2e-3)
+        self.assertTrue(abs(torch_loss - keras_loss) < 1e-2)
         self.assertTrue(np.allclose(
             torch_linear.weight.detach().numpy().transpose(),
             keras_linear.get_weights()[0],
-            atol=2e-3,
+            atol=1e-2,
         ))
         self.assertTrue(np.allclose(
             torch_linear.bias.detach().numpy(),
             keras_linear.get_weights()[1],
-            atol=2e-3,
+            atol=1e-2,
         ))
 
     def test_with_constraint(self):
