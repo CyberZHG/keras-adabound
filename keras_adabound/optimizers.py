@@ -10,7 +10,7 @@ class AdaBound(keras.optimizers.Optimizer):
         final_lr: float >= 0. Final (SGD) learning rate.
         beta_1: float, 0 < beta < 1. Generally close to 1.
         beta_2: float, 0 < beta < 1. Generally close to 1.
-        gamma: float, 0 < gamma < 1. Convergence speed of the bound functions
+        gamma: float, 0 < gamma < 1. Convergence speed of the bound functions.
         epsilon: float >= 0. Fuzz factor. If `None`, defaults to `K.epsilon()`.
         decay: float >= 0. Learning rate decay over each update.
         amsgrad: boolean. Whether to apply the AMSGrad variant of this algorithm.
