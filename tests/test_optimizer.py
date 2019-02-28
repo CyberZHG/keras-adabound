@@ -6,11 +6,19 @@ import keras
 import keras.backend as K
 import torch
 import numpy as np
+import tensorflow as tf
 from adabound import AdaBound as OfficialAdaBound
 from keras_adabound import AdaBound
 
 
 class TestOptimizers(TestCase):
+
+    @staticmethod
+    def reset_seed(seed):
+        random.seed(seed)
+        np.random.seed(seed)
+        tf.set_random_seed(seed)
+        torch.manual_seed(seed)
 
     @staticmethod
     def gen_torch_linear(w, b):
@@ -31,11 +39,11 @@ class TestOptimizers(TestCase):
         return np.random.standard_normal((3, 5)), np.random.standard_normal((5,))
 
     def test_same(self):
-        np.random.seed(0xcafe)
+        self.reset_seed(0xcafe)
         w, b = self.gen_random_weights()
         torch_linear = self.gen_torch_linear(w, b)
         keras_linear = self.gen_keras_linear(w, b)
-        model_path = os.path.join(tempfile.gettempdir(), 'keras_adabound_%f.h5' % random.random())
+        model_path = os.path.join(tempfile.gettempdir(), 'keras_adabound.h5')
         keras_linear.save(model_path)
         keras_linear = keras.models.load_model(model_path, custom_objects={'AdaBound': AdaBound})
         w, b = self.gen_random_weights()
@@ -52,7 +60,7 @@ class TestOptimizers(TestCase):
             optimizer.step()
             keras_loss = keras_linear.train_on_batch(x, y).tolist()
             # print(i, torch_loss, keras_loss)
-        self.assertTrue(abs(torch_loss - keras_loss) < 2e-3)
+        self.assertTrue(abs(torch_loss - keras_loss) < 1e-3)
         self.assertTrue(np.allclose(
             torch_linear.weight.detach().numpy().transpose(),
             keras_linear.get_weights()[0],
@@ -65,7 +73,7 @@ class TestOptimizers(TestCase):
         ))
 
     def test_same_amsgrad(self):
-        np.random.seed(0xcafe)
+        self.reset_seed(0xcafe)
         w, b = self.gen_random_weights()
         torch_linear = self.gen_torch_linear(w, b)
         keras_linear = self.gen_keras_linear(w, b, amsgrad=True)
@@ -93,7 +101,7 @@ class TestOptimizers(TestCase):
         self.assertTrue(np.allclose(
             torch_linear.weight.detach().numpy().transpose(),
             keras_linear.get_weights()[0],
-            atol=3e-3,
+            atol=2e-3,
         ))
         self.assertTrue(np.allclose(
             torch_linear.bias.detach().numpy(),

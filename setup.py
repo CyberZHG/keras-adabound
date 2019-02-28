@@ -12,13 +12,13 @@ with codecs.open('requirements.txt', 'r', 'utf8') as reader:
 
 setup(
     name='keras-adabound',
-    version='0.1.0',
+    version='0.2.0',
     packages=find_packages(),
     url='https://github.com/CyberZHG/keras-adabound',
     license='MIT',
     author='CyberZHG',
     author_email='CyberZHG@gmail.com',
-    description='AdaBound in Keras',
+    description='AdaBound optimizer in Keras',
     long_description=long_description,
     long_description_content_type='text/markdown',
     install_requires=install_requires,
