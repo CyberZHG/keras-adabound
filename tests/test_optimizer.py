@@ -118,7 +118,7 @@ class TestOptimizers(TestCase):
             kernel_constraint=keras.constraints.max_norm(1.0),
             weights=[w, b]),
         )
-        model.compile(optimizer=AdaBound(lr=1e-3, final_lr=0.1), loss='mse')
+        model.compile(optimizer=AdaBound(lr=1e-3, final_lr=0.1, decay=0.5), loss='mse')
         x = np.random.standard_normal((1, 3))
         y = np.dot(x, w) + b
         model.train_on_batch(x, y)

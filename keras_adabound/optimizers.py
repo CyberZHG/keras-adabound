@@ -12,6 +12,7 @@ class AdaBound(keras.optimizers.Optimizer):
         beta_2: float, 0 < beta < 1. Generally close to 1.
         gamma: float, 0 < gamma < 1. Convergence speed of the bound functions
         epsilon: float >= 0. Fuzz factor. If `None`, defaults to `K.epsilon()`.
+        decay: float >= 0. Learning rate decay over each update.
         amsgrad: boolean. Whether to apply the AMSGrad variant of this algorithm.
 
     # References
@@ -19,30 +20,36 @@ class AdaBound(keras.optimizers.Optimizer):
           (https://openreview.net/forum?id=Bkg3g2R9FX)
     """
 
-    def __init__(self, lr=0.001, final_lr=0.1, beta_1=0.9, beta_2=0.999,
-                 gamma=0.001, epsilon=None, amsgrad=False, **kwargs):
+    def __init__(self, lr=0.001, final_lr=0.1, beta_1=0.9, beta_2=0.999, gamma=0.001,
+                 epsilon=None, decay=0., amsgrad=False, **kwargs):
         super(AdaBound, self).__init__(**kwargs)
         with K.name_scope(self.__class__.__name__):
             self.iterations = K.variable(0, dtype='int64', name='iterations')
             self.lr = K.variable(lr, name='lr')
+            self.final_lr = K.variable(final_lr, name='final_lr')
             self.beta_1 = K.variable(beta_1, name='beta_1')
             self.beta_2 = K.variable(beta_2, name='beta_2')
-            self.final_lr = K.variable(final_lr, name='final_lr')
             self.gamma = K.variable(gamma, name='gamma')
+            self.decay = K.variable(decay, name='decay')
         if epsilon is None:
             epsilon = K.epsilon()
         self.epsilon = epsilon
+        self.initial_decay = decay
         self.amsgrad = amsgrad
 
     def get_updates(self, loss, params):
         grads = self.get_gradients(loss, params)
         self.updates = [K.update_add(self.iterations, 1)]
 
-        t = K.cast(self.iterations, K.floatx()) + 1
+        lr = self.lr
+        if self.initial_decay > 0:
+            lr = lr * (1. / (1. + self.decay * K.cast(self.iterations,
+                                                      K.dtype(self.decay))))
 
-        bias_correction_1 = 1.0 - self.beta_1 ** t
-        bias_correction_2 = 1.0 - self.beta_2 ** t
-        lr_t = self.lr * K.sqrt(bias_correction_2) / bias_correction_1
+        t = K.cast(self.iterations, K.floatx()) + 1
+        lr_t = lr * (K.sqrt(1. - K.pow(self.beta_2, t)) /
+                     (1. - K.pow(self.beta_1, t)))
+
         lower_bound = self.final_lr * (1.0 - 1.0 / (self.gamma * t + 1.0))
         upper_bound = self.final_lr * (1.0 + 1.0 / (self.gamma * t))
 
@@ -79,10 +86,11 @@ class AdaBound(keras.optimizers.Optimizer):
 
     def get_config(self):
         config = {'lr': float(K.get_value(self.lr)),
+                  'final_lr': float(K.get_value(self.final_lr)),
                   'beta_1': float(K.get_value(self.beta_1)),
                   'beta_2': float(K.get_value(self.beta_2)),
-                  'final_lr': float(K.get_value(self.final_lr)),
                   'gamma': float(K.get_value(self.gamma)),
+                  'decay': float(K.get_value(self.decay)),
                   'epsilon': self.epsilon,
                   'amsgrad': self.amsgrad}
         base_config = super(AdaBound, self).get_config()
