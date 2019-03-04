@@ -8,8 +8,7 @@ class AdaBound(keras.optimizers.Optimizer):
     # Arguments
         lr: float >= 0. Learning rate.
         final_lr: float >= 0. Final (SGD) learning rate.
-        base_lr: float >= 0. Used for loading the optimizer.
-                 There is no need to set the argument manually.
+        base_lr: float >= 0. Used for loading the optimizer. Do not set the argument manually.
         beta_1: float, 0 < beta < 1. Generally close to 1.
         beta_2: float, 0 < beta < 1. Generally close to 1.
         gamma: float, 0 < gamma < 1. Convergence speed of the bound functions.

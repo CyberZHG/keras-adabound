@@ -108,17 +108,3 @@ class TestOptimizers(TestCase):
             keras_linear.get_weights()[1],
             atol=1e-2,
         ))
-
-    def test_with_constraint(self):
-        w, b = self.gen_random_weights()
-        model = keras.models.Sequential()
-        model.add(keras.layers.Dense(
-            input_shape=(3,),
-            units=5,
-            kernel_constraint=keras.constraints.max_norm(1.0),
-            weights=[w, b]),
-        )
-        model.compile(optimizer=AdaBound(lr=1e-3, final_lr=0.1, decay=0.5), loss='mse')
-        x = np.random.standard_normal((1, 3))
-        y = np.dot(x, w) + b
-        model.train_on_batch(x, y)
