@@ -8,6 +8,8 @@ class AdaBound(keras.optimizers.Optimizer):
     # Arguments
         lr: float >= 0. Learning rate.
         final_lr: float >= 0. Final (SGD) learning rate.
+        base_lr: float >= 0. Used for loading the optimizer.
+                 There is no need to set the argument manually.
         beta_1: float, 0 < beta < 1. Generally close to 1.
         beta_2: float, 0 < beta < 1. Generally close to 1.
         gamma: float, 0 < gamma < 1. Convergence speed of the bound functions.
@@ -20,7 +22,8 @@ class AdaBound(keras.optimizers.Optimizer):
           (https://openreview.net/forum?id=Bkg3g2R9FX)
     """
 
-    def __init__(self, lr=0.001, final_lr=0.1, beta_1=0.9, beta_2=0.999, gamma=0.001,
+    def __init__(self, lr=0.001, final_lr=0.1, base_lr=None,
+                 beta_1=0.9, beta_2=0.999, gamma=0.001,
                  epsilon=None, decay=0., amsgrad=False, **kwargs):
         super(AdaBound, self).__init__(**kwargs)
         with K.name_scope(self.__class__.__name__):
@@ -33,7 +36,10 @@ class AdaBound(keras.optimizers.Optimizer):
             self.decay = K.variable(decay, name='decay')
         if epsilon is None:
             epsilon = K.epsilon()
-        self.base_lr = lr
+        if base_lr is None:
+            self.base_lr = lr
+        else:
+            self.base_lr = base_lr
         self.epsilon = epsilon
         self.initial_decay = decay
         self.amsgrad = amsgrad
@@ -88,6 +94,7 @@ class AdaBound(keras.optimizers.Optimizer):
     def get_config(self):
         config = {'lr': float(K.get_value(self.lr)),
                   'final_lr': float(K.get_value(self.final_lr)),
+                  'base_lr': self.base_lr,
                   'beta_1': float(K.get_value(self.beta_1)),
                   'beta_2': float(K.get_value(self.beta_2)),
                   'gamma': float(K.get_value(self.gamma)),
