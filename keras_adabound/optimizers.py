@@ -33,6 +33,7 @@ class AdaBound(keras.optimizers.Optimizer):
             self.decay = K.variable(decay, name='decay')
         if epsilon is None:
             epsilon = K.epsilon()
+        self.base_lr = lr
         self.epsilon = epsilon
         self.initial_decay = decay
         self.amsgrad = amsgrad
@@ -49,9 +50,9 @@ class AdaBound(keras.optimizers.Optimizer):
         t = K.cast(self.iterations, K.floatx()) + 1
         lr_t = lr * (K.sqrt(1. - K.pow(self.beta_2, t)) /
                      (1. - K.pow(self.beta_1, t)))
-
-        lower_bound = self.final_lr * (1.0 - 1.0 / (self.gamma * t + 1.0))
-        upper_bound = self.final_lr * (1.0 + 1.0 / (self.gamma * t))
+        final_lr = self.final_lr * lr / self.base_lr
+        lower_bound = final_lr * (1.0 - 1.0 / (self.gamma * t + 1.0))
+        upper_bound = final_lr * (1.0 + 1.0 / (self.gamma * t))
 
         ms = [K.zeros(K.int_shape(p), dtype=K.dtype(p)) for p in params]
         vs = [K.zeros(K.int_shape(p), dtype=K.dtype(p)) for p in params]
