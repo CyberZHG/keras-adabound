@@ -28,3 +28,17 @@ from keras_adabound import AdaBound
 
 model = keras.models.load_model(model_path, custom_objects={'AdaBound': AdaBound})
 ```
+
+### About weight decay
+
+The optimizer does not have an argument named `weight_decay` (as in the official repo) since it can be done by adding L2 regularizers to weights:
+
+```python
+import keras
+
+regularizer = keras.regularizers.l2(WEIGHT_DECAY / 2)
+for layer in model.layers:
+    for attr in ['kernel_regularizer', 'bias_regularizer']:
+        if hasattr(layer, attr) and layer.trainable:
+            setattr(layer, attr, regularizer)
+```

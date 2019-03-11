@@ -18,7 +18,7 @@ A clear and concise description of what the bug is.
 **Minimal Codes To Reproduce**
 
 ```python
-import keras_bert
+from keras_adabound import AdaBound
 
 pass
 ```
