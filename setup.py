@@ -12,7 +12,7 @@ with codecs.open('requirements.txt', 'r', 'utf8') as reader:
 
 setup(
     name='keras-adabound',
-    version='0.4.1',
+    version='0.5.0',
     packages=find_packages(),
     url='https://github.com/CyberZHG/keras-adabound',
     license='MIT',

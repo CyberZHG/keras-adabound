@@ -1,5 +1,5 @@
-import keras
-import keras.backend as K
+from .backend import keras
+from .backend import backend as K
 
 
 class AdaBound(keras.optimizers.Optimizer):
@@ -14,6 +14,7 @@ class AdaBound(keras.optimizers.Optimizer):
         gamma: float, 0 < gamma < 1. Convergence speed of the bound functions.
         epsilon: float >= 0. Fuzz factor. If `None`, defaults to `K.epsilon()`.
         decay: float >= 0. Learning rate decay over each update.
+        weight_decay: float >= 0. Weight decay.
         amsgrad: boolean. Whether to apply the AMSGrad variant of this algorithm.
 
     # References
@@ -23,7 +24,7 @@ class AdaBound(keras.optimizers.Optimizer):
 
     def __init__(self, lr=0.001, final_lr=0.1, base_lr=None,
                  beta_1=0.9, beta_2=0.999, gamma=0.001,
-                 epsilon=None, decay=0., amsgrad=False, **kwargs):
+                 epsilon=None, decay=0., weight_decay=0., amsgrad=False, **kwargs):
         super(AdaBound, self).__init__(**kwargs)
         with K.name_scope(self.__class__.__name__):
             self.iterations = K.variable(0, dtype='int64', name='iterations')
@@ -33,6 +34,7 @@ class AdaBound(keras.optimizers.Optimizer):
             self.beta_2 = K.variable(beta_2, name='beta_2')
             self.gamma = K.variable(gamma, name='gamma')
             self.decay = K.variable(decay, name='decay')
+            self.weight_decay = K.variable(weight_decay, name='weight_decay')
         if epsilon is None:
             epsilon = K.epsilon()
         if base_lr is None:
@@ -41,6 +43,7 @@ class AdaBound(keras.optimizers.Optimizer):
             self.base_lr = base_lr
         self.epsilon = epsilon
         self.initial_decay = decay
+        self.initial_weight_decay = weight_decay
         self.amsgrad = amsgrad
 
     def get_updates(self, loss, params):
@@ -68,6 +71,11 @@ class AdaBound(keras.optimizers.Optimizer):
         self.weights = [self.iterations] + ms + vs + vhats
 
         for p, g, m, v, vhat in zip(params, grads, ms, vs, vhats):
+            if self.initial_weight_decay > 0.:
+                # Note that the decayed weights are added to the momentums.
+                # The mechanism is the same as the official repo.
+                g += self.weight_decay * p
+
             m_t = (self.beta_1 * m) + (1. - self.beta_1) * g
             v_t = (self.beta_2 * v) + (1. - self.beta_2) * K.square(g)
 
@@ -78,7 +86,6 @@ class AdaBound(keras.optimizers.Optimizer):
             else:
                 step = lr_t / (K.sqrt(v_t) + self.epsilon)
             p_t = p - K.minimum(K.maximum(step, lower_bound), upper_bound) * m_t
-
             self.updates.append(K.update(m, m_t))
             self.updates.append(K.update(v, v_t))
             new_p = p_t
@@ -98,6 +105,7 @@ class AdaBound(keras.optimizers.Optimizer):
                   'beta_2': float(K.get_value(self.beta_2)),
                   'gamma': float(K.get_value(self.gamma)),
                   'decay': float(K.get_value(self.decay)),
+                  'weight_decay': float(K.get_value(self.weight_decay)),
                   'epsilon': self.epsilon,
                   'amsgrad': self.amsgrad}
         base_config = super(AdaBound, self).get_config()

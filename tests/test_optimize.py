@@ -1,11 +1,10 @@
 import os
 import tempfile
-import random
 from unittest import TestCase
-import keras
-import keras.backend as K
 import numpy as np
 import tensorflow as tf
+from keras_adabound.backend import keras
+from keras_adabound.backend import backend as K
 from keras_adabound import AdaBound
 
 
@@ -13,7 +12,6 @@ class TestOptimizers(TestCase):
 
     @staticmethod
     def reset_seed(seed):
-        random.seed(seed)
         np.random.seed(seed)
         tf.set_random_seed(seed)
 
@@ -21,7 +19,7 @@ class TestOptimizers(TestCase):
     def gen_keras_linear(w, b, amsgrad=False):
         model = keras.models.Sequential()
         model.add(keras.layers.Dense(input_shape=(3,), units=5, weights=[w, b]))
-        model.compile(optimizer=AdaBound(lr=1e-3, final_lr=0.1, amsgrad=amsgrad), loss='mse')
+        model.compile(optimizer=AdaBound(lr=1e-3, final_lr=0.1, amsgrad=amsgrad, weight_decay=1e-3), loss='mse')
         return model
 
     @staticmethod
