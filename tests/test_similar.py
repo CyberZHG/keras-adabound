@@ -1,16 +1,14 @@
 import os
-import sys
 import tempfile
 from unittest import TestCase
 import torch
 import numpy as np
 import tensorflow as tf
-from keras_adabound.backend import keras
-from keras_adabound.backend import backend as K
+from tensorflow import keras
 from keras_adabound import AdaBound
+from adabound import AdaBound as OfficialAdaBound
 
-if sys.version_info[0] == 3:
-    from adabound import AdaBound as OfficialAdaBound
+K = keras.backend
 
 
 class TestOptimizers(TestCase):
@@ -18,7 +16,7 @@ class TestOptimizers(TestCase):
     @staticmethod
     def reset_seed(seed):
         np.random.seed(seed)
-        tf.set_random_seed(seed)
+        tf.random.set_seed(seed)
         torch.manual_seed(seed)
 
     @staticmethod
@@ -45,8 +43,6 @@ class TestOptimizers(TestCase):
         return np.random.standard_normal((3, 5)), np.random.standard_normal((5,))
 
     def test_same(self):
-        if sys.version_info[0] < 3:
-            return
         self.reset_seed(0xcafe)
         w, b = self.gen_random_weights()
         torch_linear = self.gen_torch_linear(w, b)
@@ -56,7 +52,7 @@ class TestOptimizers(TestCase):
         keras_linear = keras.models.load_model(model_path, custom_objects={'AdaBound': AdaBound})
         w, b = self.gen_random_weights()
         criterion = torch.nn.MSELoss()
-        optimizer = OfficialAdaBound(torch_linear.parameters(), lr=1e-3, final_lr=0.1, eps=K.epsilon())
+        optimizer = OfficialAdaBound(torch_linear.parameters(), lr=1e-3, final_lr=0.1, eps=1e-8)
         for i in range(300):
             x = np.random.standard_normal((1, 3))
             y = np.dot(x, w) + b
@@ -66,23 +62,21 @@ class TestOptimizers(TestCase):
             torch_loss = loss.tolist()
             loss.backward()
             optimizer.step()
-            keras_loss = keras_linear.train_on_batch(x, y).tolist()
+            keras_loss = keras_linear.train_on_batch(x, y)
             # print(i, torch_loss, keras_loss)
-        self.assertTrue(abs(torch_loss - keras_loss) < 1e-2)
+        self.assertTrue(abs(torch_loss - keras_loss) < 1e-4)
         self.assertTrue(np.allclose(
             torch_linear.weight.detach().numpy().transpose(),
             keras_linear.get_weights()[0],
-            atol=1e-2,
+            atol=1e-4,
         ))
         self.assertTrue(np.allclose(
             torch_linear.bias.detach().numpy(),
             keras_linear.get_weights()[1],
-            atol=1e-2,
+            atol=1e-4,
         ))
 
     def test_same_amsgrad(self):
-        if sys.version_info[0] < 3:
-            return
         self.reset_seed(0xcafe)
         w, b = self.gen_random_weights()
         torch_linear = self.gen_torch_linear(w, b)
@@ -105,23 +99,21 @@ class TestOptimizers(TestCase):
             torch_loss = loss.tolist()
             loss.backward()
             optimizer.step()
-            keras_loss = keras_linear.train_on_batch(x, y).tolist()
+            keras_loss = keras_linear.train_on_batch(x, y)
             # print(i, torch_loss, keras_loss)
-        self.assertTrue(abs(torch_loss - keras_loss) < 1e-2)
+        self.assertTrue(abs(torch_loss - keras_loss) < 1e-4)
         self.assertTrue(np.allclose(
             torch_linear.weight.detach().numpy().transpose(),
             keras_linear.get_weights()[0],
-            atol=1e-2,
+            atol=1e-4,
         ))
         self.assertTrue(np.allclose(
             torch_linear.bias.detach().numpy(),
             keras_linear.get_weights()[1],
-            atol=1e-2,
+            atol=1e-4,
         ))
 
     def test_same_weight_decay(self):
-        if sys.version_info[0] < 3:
-            return
         self.reset_seed(0xcafe)
         w, b = self.gen_random_weights()
         torch_linear = self.gen_torch_linear(w, b)
@@ -144,16 +136,16 @@ class TestOptimizers(TestCase):
             torch_loss = loss.tolist()
             loss.backward()
             optimizer.step()
-            keras_loss = keras_linear.train_on_batch(x, y).tolist()
+            keras_loss = keras_linear.train_on_batch(x, y)
             # print(i, torch_loss, keras_loss)
-        self.assertTrue(abs(torch_loss - keras_loss) < 1e-2)
+        self.assertTrue(abs(torch_loss - keras_loss) < 1e-4)
         self.assertTrue(np.allclose(
             torch_linear.weight.detach().numpy().transpose(),
             keras_linear.get_weights()[0],
-            atol=1e-2,
+            atol=1e-4,
         ))
         self.assertTrue(np.allclose(
             torch_linear.bias.detach().numpy(),
             keras_linear.get_weights()[1],
-            atol=1e-2,
+            atol=1e-4,
         ))
